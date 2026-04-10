@@ -1,40 +1,65 @@
 import streamlit as st
+from datetime import datetime
 
+# ---------------- PAGE CONFIG ----------------
 st.set_page_config(
-    page_title="ESRS Fun Dashboard 🌟",
+    page_title="ESRS Dashboard",
     page_icon="⚡",
     layout="wide"
 )
 
-# ---------------------------
-# Styling
-# ---------------------------
+# ---------------- AESTHETIC CLASSIC THEME ----------------
 st.markdown("""
 <style>
-body {
-    background-color: #E6E6FA;
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&display=swap');
+
+.stApp {
+    background: linear-gradient(135deg, #2B1B3F, #3A2A55);
+    font-family: 'Playfair Display', serif;
 }
-.big-font {
-    font-size:30px !important;
-    color: #6A0DAD;
-    font-weight: bold;
+
+/* Title */
+.main-title {
+    font-size: 38px;
+    color: #F1E9FF;
+    text-align: center;
+    font-weight: 600;
+    margin-top: 30px;
+    margin-bottom: 40px;
+    letter-spacing: 1px;
 }
-.medium-font {
-    font-size:22px !important;
-    color: #4B0082;
-    font-weight: bold;
+
+/* Sub text */
+p, label, div {
+    color: #E6E0F5;
 }
-.fun-text {
-    font-size:18px !important;
-    color: #483D8B;
-    font-style: italic;
+
+/* File uploader spacing */
+section[data-testid="stFileUploader"] {
+    background-color: #4A3A6A;
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 30px;
+    margin-bottom: 25px;
+}
+
+/* Metric cards */
+[data-testid="metric-container"] {
+    background-color: #4A3A6A;
+    border-radius: 12px;
+    padding: 10px;
+}
+
+/* Buttons */
+.stDownloadButton button {
+    background-color: #7C5AC7;
+    color: white;
+    border-radius: 8px;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------------------
-# Functions
-# ---------------------------
+# ---------------- FUNCTIONS ----------------
 def read_text_file(txt_file):
     text = txt_file.read().decode("utf-8")
     return text.lower()
@@ -67,66 +92,85 @@ def reliability_info(score):
     elif score >= 60:
         return "Good", "orange", "😐"
     else:
-        return "Poor", "red", "😢"
+        return "Needs Improvement", "red", "😢"
 
-# ---------------------------
-# UI Header
-# ---------------------------
-st.markdown("<h1 class='big-font'>Energy Savings Reliability Score (ESRS) ⚡</h1>", unsafe_allow_html=True)
-st.markdown("<p class='fun-text'>Upload your project text and evaluate credibility instantly!</p>", unsafe_allow_html=True)
+# ---------------- HEADER ----------------
+st.markdown("<div class='main-title'>Energy Savings Reliability Score (ESRS)</div>", unsafe_allow_html=True)
 
-txt_file = st.file_uploader("Upload TXT file 📂", type=["txt"])
+st.write("")  # extra spacing
 
+# ---------------- UPLOAD ----------------
+txt_file = st.file_uploader("Upload your project report (TXT file)", type=["txt"])
+
+# ---------------- MAIN ----------------
 if txt_file:
     text = read_text_file(txt_file)
     score, missing = calculate_score(text)
 
     category, color, emoji = reliability_info(score)
 
-    # Score Section
-    st.markdown("## 🌟 Reliability Score")
+    # Score section
+    st.subheader("Reliability Score")
     st.progress(score)
-    st.markdown(f"<h2 style='color:{color}'>{score}% {emoji}</h2>", unsafe_allow_html=True)
+    st.markdown(f"<h2 style='color:#F1E9FF; text-align:center'>{score}% {emoji}</h2>", unsafe_allow_html=True)
 
-    # Category
-    st.info(f"Reliability Category: **{category}**")
-
-    # Joyful celebration
     if score >= 80:
         st.balloons()
-
-    # Management Recommendation
-    st.markdown("## 🎯 Management Recommendation")
-    if score >= 80:
-        st.success("Use this case study confidently for client presentation.")
+        st.success("Excellent case study — ready for client presentation.")
     elif score >= 60:
-        st.warning("Acceptable but consider improving documentation.")
+        st.info("Good quality — minor improvements recommended.")
     else:
-        st.error("Not recommended for client presentation.")
+        st.warning("Needs improvement before presentation.")
 
-    # Missing items
+    # KPI
+    st.subheader("Key Insights")
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric("Score", f"{score}%")
+    col2.metric("Missing Items", len(missing))
+    col3.metric("Category", category)
+
+    # Recommendation
+    st.subheader("Management Recommendation")
+
+    if score >= 80:
+        st.success("Use confidently for client proposal.")
+    elif score >= 60:
+        st.warning("Acceptable but improve documentation.")
+    else:
+        st.error("Not recommended for presentation.")
+
+    # Missing info
     if missing:
-        st.markdown("## ⚠️ Missing Information")
+        st.subheader("Missing Information")
         for m in missing:
             st.write(f"• {m}")
 
-    # Useful Info Section
-    st.markdown("## 📊 Why This Matters")
+    # Why it matters
+    st.subheader("Why This Matters")
     st.write("""
-    This score helps management:
-    - Select strong case studies
-    - Avoid overclaiming savings
-    - Improve proposal credibility
-    - Standardize project documentation
+    ✔ Improves proposal credibility  
+    ✔ Standardizes reporting quality  
+    ✔ Reduces overclaiming risk  
+    ✔ Builds client trust  
     """)
 
-    # KPI Boxes
-    col1, col2, col3 = st.columns(3)
+    # Report download
+    report = f"""
+ESRS REPORT
+Date: {datetime.now()}
 
-    col1.metric("Reliability Score", f"{score}%")
-    col2.metric("Missing Items", len(missing))
-    col3.metric("Status", category)
+Score: {score}%
+Category: {category}
+Missing: {", ".join(missing)}
+"""
 
-    # Footer fun message
-    st.markdown("---")
-    st.markdown("💜 Built for Energy Engineers | ESRS AI Checker")
+    st.download_button(
+        label="Download ESRS Report",
+        data=report,
+        file_name="ESRS_Report.txt",
+        mime="text/plain"
+    )
+
+st.markdown("---")
+st.markdown("ESRS Dashboard | Energy Engineering Tool ⚡")
